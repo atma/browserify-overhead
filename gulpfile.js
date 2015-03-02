@@ -1,38 +1,186 @@
 var gulp = require('gulp');
-var rename = require('gulp-rename');
-var gulpBrowserify = require('gulp-browserify');
 var browserify = require('browserify');
 var uglify = require('gulp-uglify');
 var source = require('vinyl-source-stream');
 var buffer = require('vinyl-buffer');
+var sourcemaps = require('gulp-sourcemaps');
+var concat = require('gulp-concat');
+var size = require('gulp-size');
+var rimraf = require('rimraf');
 
-//
-gulp.task('small1', function() {
-    gulp.src('./src/small/entry.js')
-        .pipe(gulpBrowserify({
-            insertGlobals : false,
-            debug : true
+
+// Concatenate and uglify all the files with no modification
+gulp.task('uglify:original', ['uglify:small', 'uglify:large', 'uglify:many', 'uglify:subdeps']);
+
+gulp.task('uglify:small', function() {
+    return gulp.src('./src/small/*.js')
+        .pipe(sourcemaps.init({loadMaps: true}))
+        .pipe(concat('small.min.js'))
+        .pipe(uglify())
+        .pipe(sourcemaps.write('./'))
+        .pipe(size({
+            showFiles: true,
+            gzip: false
         }))
-        .pipe(uglify())
-        .pipe(rename('bundle1.js'))
-        .pipe(gulp.dest('./build/small'));
+        .pipe(size({
+            showFiles: true,
+            gzip: true
+        }))
+        .pipe(gulp.dest('./build/small/'));
 });
 
-gulp.task('small2', function() {
-    return browserify('./src/small/entry.js')
+gulp.task('uglify:large', function() {
+    return gulp.src(['./node_modules/lodash/index.js', './src/large/entry.js'])
+        .pipe(sourcemaps.init({loadMaps: true}))
+        .pipe(concat('large.min.js'))
+        .pipe(uglify())
+        .pipe(sourcemaps.write('./'))
+        .pipe(size({
+            showFiles: true,
+            gzip: false
+        }))
+        .pipe(size({
+            showFiles: true,
+            gzip: true
+        }))
+        .pipe(gulp.dest('./build/large/'));
+});
+
+gulp.task('uglify:many', function() {
+    return gulp.src('./src/many/*.js')
+        .pipe(sourcemaps.init({loadMaps: true}))
+        .pipe(concat('many.min.js'))
+        .pipe(uglify())
+        .pipe(sourcemaps.write('./'))
+        .pipe(size({
+            showFiles: true,
+            gzip: false
+        }))
+        .pipe(size({
+            showFiles: true,
+            gzip: true
+        }))
+        .pipe(gulp.dest('./build/many/'));
+});
+
+gulp.task('uglify:subdeps', function() {
+    return gulp.src('./src/subdeps/*.js')
+        .pipe(sourcemaps.init({loadMaps: true}))
+        .pipe(concat('subdeps.min.js'))
+        .pipe(uglify())
+        .pipe(sourcemaps.write('./'))
+        .pipe(size({
+            showFiles: true,
+            gzip: false
+        }))
+        .pipe(size({
+            showFiles: true,
+            gzip: true
+        }))
+        .pipe(gulp.dest('./build/subdeps/'));
+});
+
+
+// Clean task
+gulp.task('clean', function(cb) {
+    rimraf('./build', cb);
+});
+
+
+// Browserify all bundles
+gulp.task('browserify', ['browserify:small', 'browserify:large', 'browserify:many', 'browserify:subdeps']);
+
+// Browserify "small" bundle
+gulp.task('browserify:small', function() {
+    return browserify({
+            entries: ['./src/small/entry.js'],
+            debug: true
+        })
         .bundle()
-        .pipe(source('bundle2.js'))
+        .pipe(source('small-bundle.js'))
         .pipe(buffer())
+        .pipe(sourcemaps.init({loadMaps: true}))
         .pipe(uglify())
-        .pipe(gulp.dest('./build/small'));
+        .pipe(sourcemaps.write('./'))
+        .pipe(size({
+            showFiles: true,
+            gzip: false
+        }))
+        .pipe(size({
+            showFiles: true,
+            gzip: true
+        }))
+        .pipe(gulp.dest('./build/small/'));
 });
 
-gulp.task('small3', function() {
-    return browserify('./src/small/entry.js', {debug: true})
-        .plugin('minifyify', {output: './build/small/bundle3.map.json'})
+// Browserify "large" bundle (includes lodash)
+gulp.task('browserify:large', function() {
+    return browserify({
+        entries: ['./src/large/entry.js'],
+        debug: true
+    })
         .bundle()
-        .pipe(source('bundle3.js'))
-        .pipe(gulp.dest('./build/small'));
+        .pipe(source('large-bundle.js'))
+        .pipe(buffer())
+        .pipe(sourcemaps.init({loadMaps: true}))
+        .pipe(uglify())
+        .pipe(sourcemaps.write('./'))
+        .pipe(size({
+            showFiles: true,
+            gzip: false
+        }))
+        .pipe(size({
+            showFiles: true,
+            gzip: true
+        }))
+        .pipe(gulp.dest('./build/large/'));
 });
 
-gulp.task('default', ['small1', 'small2', 'small3']);
+// Browserify "many" bundle
+gulp.task('browserify:many', function() {
+    return browserify({
+        entries: ['./src/many/entry.js'],
+        debug: true
+    })
+        .bundle()
+        .pipe(source('many-bundle.js'))
+        .pipe(buffer())
+        .pipe(sourcemaps.init({loadMaps: true}))
+        .pipe(uglify())
+        .pipe(sourcemaps.write('./'))
+        .pipe(size({
+            showFiles: true,
+            gzip: false
+        }))
+        .pipe(size({
+            showFiles: true,
+            gzip: true
+        }))
+        .pipe(gulp.dest('./build/many/'));
+});
+
+// Browserify "subdeps" bundle
+gulp.task('browserify:subdeps', function() {
+    return browserify({
+        entries: ['./src/subdeps/entry.js'],
+        debug: true
+    })
+        .bundle()
+        .pipe(source('subdeps-bundle.js'))
+        .pipe(buffer())
+        .pipe(sourcemaps.init({loadMaps: true}))
+        .pipe(uglify())
+        .pipe(sourcemaps.write('./'))
+        .pipe(size({
+            showFiles: true,
+            gzip: false
+        }))
+        .pipe(size({
+            showFiles: true,
+            gzip: true
+        }))
+        .pipe(gulp.dest('./build/subdeps/'));
+});
+
+// Runs all tasks
+gulp.task('default', ['uglify:original', 'browserify']);
