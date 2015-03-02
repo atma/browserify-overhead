@@ -10,7 +10,7 @@ var rimraf = require('rimraf');
 
 
 // Concatenate and uglify all the files with no modification
-gulp.task('uglify:original', ['uglify:small', 'uglify:large', 'uglify:many', 'uglify:subdeps']);
+gulp.task('uglify:original', ['uglify:small', 'uglify:large', 'uglify:many', 'uglify:subdeps', 'uglify:prod']);
 
 gulp.task('uglify:small', function() {
     return gulp.src('./src/small/*.js')
@@ -80,6 +80,28 @@ gulp.task('uglify:subdeps', function() {
         .pipe(gulp.dest('./build/subdeps/'));
 });
 
+gulp.task('uglify:prod', function() {
+    return gulp.src([
+            './node_modules/jquery/dist/jquery.js',
+            './node_modules/backbone/node_modules/underscore/underscore.js',
+            './node_modules/backbone/backbone.js',
+            './src/prod/*.js'
+        ])
+        .pipe(sourcemaps.init({loadMaps: true}))
+        .pipe(concat('prod.min.js'))
+        .pipe(uglify())
+        .pipe(sourcemaps.write('./'))
+        .pipe(size({
+            showFiles: true,
+            gzip: false
+        }))
+        .pipe(size({
+            showFiles: true,
+            gzip: true
+        }))
+        .pipe(gulp.dest('./build/prod/'));
+});
+
 
 // Clean task
 gulp.task('clean', function(cb) {
@@ -88,7 +110,7 @@ gulp.task('clean', function(cb) {
 
 
 // Browserify all bundles
-gulp.task('browserify', ['browserify:small', 'browserify:large', 'browserify:many', 'browserify:subdeps']);
+gulp.task('browserify', ['browserify:small', 'browserify:large', 'browserify:many', 'browserify:subdeps', 'browserify:prod']);
 
 // Browserify "small" bundle
 gulp.task('browserify:small', function() {
@@ -180,6 +202,29 @@ gulp.task('browserify:subdeps', function() {
             gzip: true
         }))
         .pipe(gulp.dest('./build/subdeps/'));
+});
+
+// Browserify "prod" bundle
+gulp.task('browserify:prod', function() {
+    return browserify({
+        entries: ['./src/prod/entry.js'],
+        debug: true
+    })
+        .bundle()
+        .pipe(source('prod-bundle.js'))
+        .pipe(buffer())
+        .pipe(sourcemaps.init({loadMaps: true}))
+        .pipe(uglify())
+        .pipe(sourcemaps.write('./'))
+        .pipe(size({
+            showFiles: true,
+            gzip: false
+        }))
+        .pipe(size({
+            showFiles: true,
+            gzip: true
+        }))
+        .pipe(gulp.dest('./build/prod/'));
 });
 
 // Runs all tasks

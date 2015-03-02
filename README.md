@@ -2,12 +2,14 @@
 
 ## The process
 
-Has been prepared the next four scenarios:
+Has been prepared the next five scenarios:
 
 * small - tiny main module with a single submodule and minimal functional content
-* large - single main module that requires `lodash` for it's functionality
-* many - single main module that requires many small submodules
 * subdeps - main module has a single dependency that requires two additional submodules
+* many - single main module that requires many small submodules
+* large - single main module that requires `lodash` for it's functionality
+* prod - near production, main module requires `jQuery` and `Backbone` which has
+        additional dependency on `underscore`
 
 Original files were minified using `uglify-js` per scenario, for every
 minified file has been generated source map and referenced in a resulting file.
@@ -99,14 +101,28 @@ predicable result all ones like this were removed in prior to an original.
 | Scenario | Original size (kb) | Original size gzipped (kb) | Bundled size (kb) | Bundled size gzipped (kb) | Overhead (kb) | Overhead gzipped (kb) |
 | -------- | -----------------: | -------------------------: | ----------------: | ------------------------: | ------------: | --------------------: |
 | small    | 0.44               | 0.29                       | 0.82              | 0.5                       | 0.38          | 0.21                  |
-| large    | 49.1               | 17.52                      | 49.6              | 17.7                      | 0.5           | 0.18                  |
-| many     | 1.85               | 0.38                       | 2.3               | 0.7                       | 0.45          | 0.32                  |
 | subdeps  | 0.73               | 0.36                       | 1.19              | 0.58                      | 0.46          | 0.22                  |
+| many     | 1.85               | 0.38                       | 2.3               | 0.7                       | 0.45          | 0.32                  |
+| large    | 49.1               | 17.52                      | 49.6              | 17.7                      | 0.5           | 0.18                  |
+| prod     | 120.01             | 41.22                      | 120.49            | 41.35                     | 0.48          | 0.13                  |
 
 
 ### Resulting overhead chart
 
 ![Runtime overhead chart](https://raw.github.com/atma/browserify-overhead/master/overhead-chart.png)
+
+### Overhead percentage
+
+Overhead has almost fixed size and in a huge bundles should be insignificant.
+Below is a table of overhead size relative to an original size.
+
+| Scenario | Overhead (%)  | Overhead gzipped (%)  |
+| -------- | ------------: | --------------------: |
+| small    | 86.36         | 72.41                 |
+| subdeps  | 63.01         | 61.11                 |
+| many     | 24.32         | 84.21                 |
+| large    | 1.02          | 1.03                  |
+| prod     | 0.40          | 0.32                  |
 
 
 ## Conclusion
